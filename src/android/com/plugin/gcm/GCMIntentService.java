@@ -116,7 +116,7 @@ public class GCMIntentService extends GCMBaseIntentService {
 				.setContentTitle(extras.getString("title"))
 				.setContentText(extras.getString("message"))
 				.setContentIntent(contentIntent)
-				.setNumber(extras.getString("msgcnt", 0))
+				.setNumber(extras.getInt("msgcnt", extras.getInt("badge", 0)))
 				.setSmallIcon(getSmallIcon(extras.getString("smallIcon"), context.getApplicationInfo().icon))
 				.setLargeIcon(getLargeIcon(extras.getString("icon")))
 				.setLights(getColor(extras.getString("led", "000000")), 500, 500)
