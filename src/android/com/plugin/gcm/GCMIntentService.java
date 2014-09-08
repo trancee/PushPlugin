@@ -20,7 +20,11 @@ import android.media.RingtoneManager;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.net.Uri;
+import android.os.StrictMode;
+import android.os.StrictMode.ThreadPolicy;
 
+import java.io.IOException;
+import java.io.InputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
 
@@ -30,7 +34,9 @@ import com.google.android.gcm.GCMBaseIntentService;
 public class GCMIntentService extends GCMBaseIntentService {
 
 	private static final String TAG = "GCMIntentService";
-	
+
+	private static String packageName = null;
+
 	public GCMIntentService() {
 		super("GCMIntentService");
 	}
@@ -92,7 +98,8 @@ public class GCMIntentService extends GCMBaseIntentService {
 
 	public void createNotification(Context context, Bundle extras)
 	{
-		NotificationManager mNotificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+		packageName = context.getPackageName();
+
 		String appName = getAppName(this);
 
 		Intent notificationIntent = new Intent(this, PushHandlerActivity.class);
@@ -101,50 +108,70 @@ public class GCMIntentService extends GCMBaseIntentService {
 
 		PendingIntent contentIntent = PendingIntent.getActivity(this, 0, notificationIntent, PendingIntent.FLAG_UPDATE_CURRENT);
 
-		int defaults = Notification.DEFAULT_ALL;
+		int defaults = extras.getInt("defaults", Notification.DEFAULT_ALL);
 
-		if (extras.getString("defaults") != null) {
-			try {
-				defaults = Integer.parseInt(extras.getString("defaults"));
-			} catch (NumberFormatException e) {}
-		}
-
-		NotificationCompat.Builder mBuilder =
+		NotificationCompat.Builder notification =
 			new NotificationCompat.Builder(context)
+				// Set which notification properties will be inherited from system defaults.
 				.setDefaults(defaults)
+				// Set the "ticker" text which is displayed in the status bar when the notification first arrives.
 				.setTicker(extras.getString("title"))
+				// Set the first line of text in the platform notification template.
 				.setContentTitle(extras.getString("title"))
+				// Set the second line of text in the platform notification template.
 				.setContentText(extras.getString("message"))
+				// Set the third line of text in the platform notification template.
+				.setSubText(extras.getString("summary"))
+				// Supply a PendingIntent to be sent when the notification is clicked.
 				.setContentIntent(contentIntent)
-				.setNumber(extras.getInt("msgcnt", extras.getInt("badge", 0)))
+				// Set the large number at the right-hand side of the notification.
+				.setNumber(extras.getInt("badge", extras.getInt("msgcnt", 0)))
+				// A variant of setSmallIcon(int) that takes an additional level parameter for when the icon is a LevelListDrawable.
 				.setSmallIcon(getSmallIcon(extras.getString("smallIcon"), context.getApplicationInfo().icon))
-				.setLargeIcon(getLargeIcon(extras.getString("icon")))
+				// Add a large icon to the notification (and the ticker on some devices).
+				.setLargeIcon(getLargeIcon(this, extras.getString("icon")))
+				// Set the desired color for the indicator LED on the device, as well as the blink duty cycle (specified in milliseconds).
 				.setLights(getColor(extras.getString("led", "000000")), 500, 500)
-				// .setWhen(System.currentTimeMillis())
-				.setAutoCancel(extras.getBoolean("autoCancel", true));
-
-		if (Build.VERSION.SDK_INT > 16) {
-			mBuilder.setStyle(new NotificationCompat.BigTextStyle().bigText(extras.getString("message")));
-		}
+				// Make this notification automatically dismissed when the user touches it.
+				.setAutoCancel(extras.getBoolean("autoCancel", true)
+			);
 
 		Uri sound = getSound(extras.getString("sound"));
 		if (sound != null) {
-			mBuilder.setSound(sound);
+			// Set the sound to play.
+			notification.setSound(sound);
 		}
 
-		int notId = 0;
+		if (Build.VERSION.SDK_INT >= 16) {
+			String pictureUrl = extras.getString("picture");
+			if (pictureUrl != null) {
+				// Add a rich notification style to be applied at build time.
+				notification.setStyle(
+					new NotificationCompat.BigPictureStyle()
+						// Overrides ContentTitle in the big form of the template.
+						.setBigContentTitle(extras.getString("title"))
+						// Set the first line of text after the detail section in the big form of the template.
+						.setSummaryText(extras.getString("message"))
+						// Override the large icon when the big notification is shown.
+						.bigLargeIcon(getLargeIcon(this, extras.getString("avatar")))
+						// Provide the bitmap to be used as the payload for the BigPicture notification.
+						.bigPicture(getPicture(this, pictureUrl))
+					);
+			} else if (extras.getString("message") != null && extras.getString("message").length() > 50) {
+				// Add a rich notification style to be applied at build time.
+				notification.setStyle(
+					new NotificationCompat.BigTextStyle()
+						// Overrides ContentTitle in the big form of the template.
+						.setBigContentTitle(extras.getString("title"))
+						// Provide the longer text to be displayed in the big form of the template in place of the content text.
+						.bigText(extras.getString("message"))
+						// Set the first line of text after the detail section in the big form of the template.
+						.setSummaryText(extras.getString("summary"))
+					);
+			}
+		}
 
-		try {
-			notId = Integer.parseInt(extras.getString("notId"));
-		}
-		catch(NumberFormatException e) {
-			Log.e(TAG, "Number format exception - Error parsing Notification ID: " + e.getMessage());
-		}
-		catch(Exception e) {
-			Log.e(TAG, "Number format exception - Error parsing Notification ID" + e.getMessage());
-		}
-
-		mNotificationManager.notify((String) appName, notId, mBuilder.build());
+		((NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE)).notify((String) appName, extras.getInt("notificationId", 0), notification.build());
 	}
 
     /**
@@ -166,7 +193,7 @@ public class GCMIntentService extends GCMBaseIntentService {
     /**
      * Returns the small icon's ID
      */
-	private static String getSmallIcon(String iconName, String icon)
+	private static int getSmallIcon(String iconName, int iconId)
 	{
 		int resId = 0;
 
@@ -181,7 +208,7 @@ public class GCMIntentService extends GCMBaseIntentService {
 		}
 
 		if (resId == 0) {
-			return icon;
+			return iconId;
 		}
 
 		return resId;
@@ -189,7 +216,7 @@ public class GCMIntentService extends GCMBaseIntentService {
     /**
      * Returns the icon's ID
      */
-	private static String getLargeIcon(String icon)
+	private static Bitmap getLargeIcon(Context context, String icon)
 	{
 		Bitmap bmp = null;
 
@@ -197,11 +224,34 @@ public class GCMIntentService extends GCMBaseIntentService {
 			if (icon.startsWith("http://") || icon.startsWith("https://")) {
 				bmp = getIconFromURL(icon);
 			} else if (icon.startsWith("file://")) {
-				bmp = getIconFromURI(icon);
+				bmp = getIconFromURI(context, icon);
 			}
 
 			if (bmp == null) {
-				bmp = getIconFromRes(icon);
+				bmp = getIconFromRes(context, icon);
+			}
+		} else {
+			bmp = BitmapFactory.decodeResource(context.getResources(), context.getApplicationInfo().icon);
+		}
+
+		return bmp;
+	}
+    /**
+     * Returns the bitmap
+     */
+	private static Bitmap getPicture(Context context, String pictureUrl)
+	{
+		Bitmap bmp = null;
+
+		if (pictureUrl != null) {
+			if (pictureUrl.startsWith("http://") || pictureUrl.startsWith("https://")) {
+				bmp = getIconFromURL(pictureUrl);
+			} else if (pictureUrl.startsWith("file://")) {
+				bmp = getIconFromURI(context, pictureUrl);
+			}
+
+			if (bmp == null) {
+				bmp = getIconFromRes(context, pictureUrl);
 			}
 		}
 
@@ -239,7 +289,7 @@ public class GCMIntentService extends GCMBaseIntentService {
      * @param {String} className
      * @param {String} iconName
      */
-    private int getIconValue (String className, String iconName) {
+    private static int getIconValue (String className, String iconName) {
         int icon = 0;
 
         try {
@@ -259,8 +309,8 @@ public class GCMIntentService extends GCMBaseIntentService {
      * @return
      *      The corresponding bitmap
      */
-    private Bitmap getIconFromRes (String icon) {
-        Resources res = LocalNotification.context.getResources();
+    private static Bitmap getIconFromRes (Context context, String icon) {
+        Resources res = context.getResources();
         int iconId = 0;
 
         iconId = getIconValue(packageName, icon);
@@ -286,7 +336,7 @@ public class GCMIntentService extends GCMBaseIntentService {
      * @return
      *      The corresponding bitmap
      */
-    private Bitmap getIconFromURL (String src) {
+    private static Bitmap getIconFromURL (String src) {
         Bitmap bmp = null;
         ThreadPolicy origMode = StrictMode.getThreadPolicy();
 
@@ -322,8 +372,8 @@ public class GCMIntentService extends GCMBaseIntentService {
      * @return
      *      The corresponding bitmap
      */
-    private Bitmap getIconFromURI (String src) {
-        AssetManager assets = LocalNotification.context.getAssets();
+    private static Bitmap getIconFromURI (Context context, String src) {
+        AssetManager assets = context.getAssets();
         Bitmap bmp = null;
 
         try {
