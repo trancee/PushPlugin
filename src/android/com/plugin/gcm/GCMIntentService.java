@@ -109,7 +109,7 @@ public class GCMIntentService extends GCMBaseIntentService {
 
 		PendingIntent contentIntent = PendingIntent.getActivity(this, 0, notificationIntent, PendingIntent.FLAG_UPDATE_CURRENT);
 
-		int defaults = extras.getInt("defaults", Notification.DEFAULT_ALL);
+		int defaults = extras.getInt("defaults", (Notification.DEFAULT_ALL));
 
 		NotificationCompat.Builder notification =
 			new NotificationCompat.Builder(context)
@@ -134,6 +134,7 @@ public class GCMIntentService extends GCMBaseIntentService {
 				// Set the desired color for the indicator LED on the device, as well as the blink duty cycle (specified in milliseconds).
 				.setLights(getColor(extras.getString("led", "000000")), 500, 500)
 				// Make this notification automatically dismissed when the user touches it.
+				.setPriority(Notification.PRIORITY_HIGH)
 				.setAutoCancel(extras.getBoolean("autoCancel", true)
 			);
 
