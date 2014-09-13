@@ -155,7 +155,7 @@ public class GCMIntentService extends GCMBaseIntentService {
 						// Set the first line of text after the detail section in the big form of the template.
 						.setSummaryText(extras.getString("message"))
 						// Override the large icon when the big notification is shown.
-						.bigLargeIcon(getLargeIcon(this, extras.getString("avatar")))
+						.bigLargeIcon(getLargeIcon(this, extras.getString("avatar", extras.getString("icon"))))
 						// Provide the bitmap to be used as the payload for the BigPicture notification.
 						.bigPicture(getPicture(this, pictureUrl))
 					);
