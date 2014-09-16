@@ -87,7 +87,6 @@ public class GCMIntentService extends GCMBaseIntentService {
 			}
 			else {
 				extras.putBoolean("foreground", false);
-				PushPlugin.sendExtras(extras);
 
                 // Send a notification if there is a message
                 if (extras.getString("message") != null && extras.getString("message").length() != 0) {
@@ -151,14 +150,16 @@ public class GCMIntentService extends GCMBaseIntentService {
 				notification.setStyle(
 					new NotificationCompat.BigPictureStyle()
 						// Overrides ContentTitle in the big form of the template.
-						.setBigContentTitle(extras.getString("title"))
+						.setBigContentTitle(extras.getString("summary", extras.getString("title")))
 						// Set the first line of text after the detail section in the big form of the template.
-						.setSummaryText(extras.getString("message"))
+						.setSummaryText(extras.getString("title", extras.getString("message")))
 						// Override the large icon when the big notification is shown.
 						.bigLargeIcon(getLargeIcon(this, extras.getString("avatar", extras.getString("icon"))))
 						// Provide the bitmap to be used as the payload for the BigPicture notification.
 						.bigPicture(getPicture(this, pictureUrl))
 					);
+
+				notification.setTicker(extras.getString("summary", extras.getString("title")));
 			} else if (extras.getString("message") != null && extras.getString("message").length() > 50) {
 				// Add a rich notification style to be applied at build time.
 				notification.setStyle(
