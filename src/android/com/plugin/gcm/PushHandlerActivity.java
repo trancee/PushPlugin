@@ -44,9 +44,9 @@ public class PushHandlerActivity extends Activity
 
 		if (extras != null)	{
 			Bundle originalExtras = extras.getBundle("pushBundle");
-            
-            originalExtras.putBoolean("foreground", false);
-            originalExtras.putBoolean("coldstart", !isPushPluginActive);
+
+			originalExtras.putBoolean("foreground", false);
+			originalExtras.putBoolean("coldstart", !isPushPluginActive);
 
 			PushPlugin.sendExtras(originalExtras);
 		}
@@ -58,7 +58,7 @@ public class PushHandlerActivity extends Activity
 	private void forceMainActivityReload()
 	{
 		PackageManager pm = getPackageManager();
-		Intent launchIntent = pm.getLaunchIntentForPackage(getApplicationContext().getPackageName());    		
+		Intent launchIntent = pm.getLaunchIntentForPackage(getApplicationContext().getPackageName());
 		startActivity(launchIntent);
 	}
 
