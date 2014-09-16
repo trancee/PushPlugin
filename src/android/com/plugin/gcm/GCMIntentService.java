@@ -115,7 +115,7 @@ public class GCMIntentService extends GCMBaseIntentService {
 				// Set which notification properties will be inherited from system defaults.
 				.setDefaults(defaults)
 				// Set the "ticker" text which is displayed in the status bar when the notification first arrives.
-				.setTicker(extras.getString("title"))
+				.setTicker(extras.getString("summary", extras.getString("title")))
 				// Set the first line of text in the platform notification template.
 				.setContentTitle(extras.getString("title"))
 				// Set the second line of text in the platform notification template.
@@ -144,30 +144,32 @@ public class GCMIntentService extends GCMBaseIntentService {
 		}
 
 		if (Build.VERSION.SDK_INT >= 16) {
+			String message = extras.getString("message");
 			String pictureUrl = extras.getString("picture");
-			if (pictureUrl != null) {
+			if (pictureUrl != null && pictureUrl.length() > 0) {
 				// Add a rich notification style to be applied at build time.
 				notification.setStyle(
 					new NotificationCompat.BigPictureStyle()
 						// Overrides ContentTitle in the big form of the template.
-						.setBigContentTitle(extras.getString("summary", extras.getString("title")))
+						.setBigContentTitle(extras.getString("title"))
 						// Set the first line of text after the detail section in the big form of the template.
-						.setSummaryText(extras.getString("title", extras.getString("message")))
+						.setSummaryText(message)
 						// Override the large icon when the big notification is shown.
 						.bigLargeIcon(getLargeIcon(this, extras.getString("avatar", extras.getString("icon"))))
 						// Provide the bitmap to be used as the payload for the BigPicture notification.
 						.bigPicture(getPicture(this, pictureUrl))
 					);
 
-				notification.setTicker(extras.getString("summary", extras.getString("title")));
-			} else if (extras.getString("message") != null && extras.getString("message").length() > 50) {
+				// remove the third line as this is confusing for BigPicture style.
+				notification.setSubText(null);
+			} else if (message != null && message.length() > 30) {
 				// Add a rich notification style to be applied at build time.
 				notification.setStyle(
 					new NotificationCompat.BigTextStyle()
 						// Overrides ContentTitle in the big form of the template.
 						.setBigContentTitle(extras.getString("title"))
 						// Provide the longer text to be displayed in the big form of the template in place of the content text.
-						.bigText(extras.getString("message"))
+						.bigText(message)
 						// Set the first line of text after the detail section in the big form of the template.
 						.setSummaryText(extras.getString("summary"))
 					);
