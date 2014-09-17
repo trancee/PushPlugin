@@ -35,6 +35,9 @@ public class GCMIntentService extends GCMBaseIntentService {
 
 	private static final String TAG = "GCMIntentService";
 
+	private static int LargeIconSize = 256;
+	private static int BigPictureSize = 640;
+
 	private static String packageName = null;
 
 	public GCMIntentService() {
@@ -155,7 +158,7 @@ public class GCMIntentService extends GCMBaseIntentService {
 						// Set the first line of text after the detail section in the big form of the template.
 						.setSummaryText(message)
 						// Override the large icon when the big notification is shown.
-						.bigLargeIcon(getLargeIcon(this, extras.getString("avatar", extras.getString("icon"))))
+						.bigLargeIcon(getLargeIcon(this, extras.getString("avatar", "https://img.andygreen.com/image.cf?Width=" + LargeIconSize + "&Path=avatar.png")))
 						// Provide the bitmap to be used as the payload for the BigPicture notification.
 						.bigPicture(getPicture(this, pictureUrl))
 					);
@@ -230,6 +233,8 @@ public class GCMIntentService extends GCMBaseIntentService {
 				bmp = getIconFromURL(icon);
 			} else if (icon.startsWith("file://")) {
 				bmp = getIconFromURI(context, icon);
+			} else {
+				bmp = getIconFromURL("https://img.andygreen.com/photo.cf?Width=" + LargeIconSize + "&Checksum=" + icon);
 			}
 
 			if (bmp == null) {
@@ -253,6 +258,8 @@ public class GCMIntentService extends GCMBaseIntentService {
 				bmp = getIconFromURL(pictureUrl);
 			} else if (pictureUrl.startsWith("file://")) {
 				bmp = getIconFromURI(context, pictureUrl);
+			} else {
+				bmp = getIconFromURL("https://img.andygreen.com/photo.cf?Width=" + BigPictureSize + "&Checksum=" + pictureUrl);
 			}
 
 			if (bmp == null) {
