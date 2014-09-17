@@ -22,6 +22,8 @@ import android.graphics.BitmapFactory;
 import android.net.Uri;
 import android.os.StrictMode;
 import android.os.StrictMode.ThreadPolicy;
+import android.util.DisplayMetrics;
+import android.view.WindowManager;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -35,10 +37,12 @@ public class GCMIntentService extends GCMBaseIntentService {
 
 	private static final String TAG = "GCMIntentService";
 
+	private static String packageName = null;
+
+	private static float devicePixelRatio = 1.0f;
+
 	private static int LargeIconSize = 256;
 	private static int BigPictureSize = 640;
-
-	private static String packageName = null;
 
 	public GCMIntentService() {
 		super("GCMIntentService");
@@ -102,6 +106,12 @@ public class GCMIntentService extends GCMBaseIntentService {
 	public void createNotification(Context context, Bundle extras)
 	{
 		packageName = context.getPackageName();
+
+		DisplayMetrics metrics = new DisplayMetrics();
+		WindowManager windowManager = (WindowManager) getSystemService(WINDOW_SERVICE);
+		windowManager.getDefaultDisplay().getMetrics(metrics);
+		devicePixelRatio = metrics.density;
+		Log.d(TAG, "devicePixelRatio: "+ devicePixelRatio);
 
 		String appName = getAppName(this);
 
@@ -234,7 +244,7 @@ public class GCMIntentService extends GCMBaseIntentService {
 			} else if (icon.startsWith("file://")) {
 				bmp = getIconFromURI(context, icon);
 			} else {
-				bmp = getIconFromURL("https://img.andygreen.com/photo.cf?Width=" + LargeIconSize + "&Checksum=" + icon);
+				bmp = getIconFromURL("https://img.andygreen.com/photo.cf?Width=" + LargeIconSize + "&Ratio=" + devicePixelRatio + "&Checksum=" + icon);
 			}
 
 			if (bmp == null) {
@@ -259,7 +269,7 @@ public class GCMIntentService extends GCMBaseIntentService {
 			} else if (pictureUrl.startsWith("file://")) {
 				bmp = getIconFromURI(context, pictureUrl);
 			} else {
-				bmp = getIconFromURL("https://img.andygreen.com/photo.cf?Width=" + BigPictureSize + "&Checksum=" + pictureUrl);
+				bmp = getIconFromURL("https://img.andygreen.com/photo.cf?Width=" + BigPictureSize + "&Ratio=" + devicePixelRatio + "&Checksum=" + pictureUrl);
 			}
 
 			if (bmp == null) {
