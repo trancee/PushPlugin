@@ -71,15 +71,15 @@ static char launchNotificationKey;
         appState = application.applicationState;
     }
 
-    // if (appState == UIApplicationStateActive) {
+    if (appState == UIApplicationStateActive) {
         PushPlugin *pushHandler = [self getCommandInstance:@"PushPlugin"];
         pushHandler.notificationMessage = userInfo;
         pushHandler.isInline = YES;
         [pushHandler notificationReceived];
-    // } else {
+    } else {
         //save it for later
-        // self.launchNotification = userInfo;
-    // }
+        self.launchNotification = userInfo;
+    }
 }
 
 - (void)applicationDidBecomeActive:(UIApplication *)application {
