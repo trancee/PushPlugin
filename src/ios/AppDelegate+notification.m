@@ -47,8 +47,9 @@ static char launchNotificationKey;
 	if (notification)
 	{
 		NSDictionary *launchOptions = [notification userInfo];
-		if (launchOptions)
+		if (launchOptions) {
 			self.launchNotification = [launchOptions objectForKey: @"UIApplicationLaunchOptionsRemoteNotificationKey"];
+		}
 	}
 }
 
@@ -83,13 +84,24 @@ static char launchNotificationKey;
 }
 
 - (void)applicationDidBecomeActive:(UIApplication *)application {
-
     NSLog(@"active");
 
     //zero badge
     application.applicationIconBadgeNumber = 0;
+    [[UIApplication sharedApplication] setApplicationIconBadgeNumber: 1];
+    [[UIApplication sharedApplication] setApplicationIconBadgeNumber: 0];
+    [[UIApplication sharedApplication] cancelAllLocalNotifications];
 
     if (self.launchNotification) {
+        /*
+        NSArray* notifications = [[UIApplication sharedApplication]scheduledLocalNotifications];
+        for (UILocalNotification* notification in notifications)
+        {
+            if ([self.launchNotification isEqualToDictionary:notification.userInfo]) {
+                [[UIApplication sharedApplication] cancelLocalNotification:notification];
+            }
+        }
+        */
         PushPlugin *pushHandler = [self getCommandInstance:@"PushPlugin"];
 
         pushHandler.notificationMessage = self.launchNotification;
