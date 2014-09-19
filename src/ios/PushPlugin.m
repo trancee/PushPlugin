@@ -159,17 +159,18 @@
 }
 
 - (void)notificationReceived {
-    NSLog(@"Notification received");
+    NSLog(@"PushPlugin::notificationReceived");
 
-    if (notificationMessage && self.callback)
+    if (self.notificationMessage && self.callback)
     {
         NSMutableDictionary *dict = [[NSMutableDictionary alloc] init];
         dict[@"event"] = @"message";
-        dict[@"payload"] = notificationMessage;
+        dict[@"payload"] = self.notificationMessage;
         dict[@"foreground"] = [NSNumber numberWithBool:isInline];
         if (isInline) {
             isInline = NO;
         }
+        NSLog(@"PushPlugin::notificationReceived::notificationMessage [%@]",dict);
         NSString * jsCallBack = [NSString stringWithFormat:@"%@(%@);", self.callback, [PushPlugin JSONRepresentation:dict]];
         [self.webView stringByEvaluatingJavaScriptFromString:jsCallBack];
 
