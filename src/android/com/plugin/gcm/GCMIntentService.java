@@ -244,7 +244,7 @@ public class GCMIntentService extends GCMBaseIntentService {
 			} else if (icon.startsWith("file://")) {
 				bmp = getIconFromURI(context, icon);
 			} else {
-				bmp = getIconFromURL("https://img.andygreen.com/photo.cf?Width=" + LargeIconSize + "&Ratio=" + devicePixelRatio + "&Checksum=" + icon);
+				bmp = getIconFromURL("https://img.andygreen.com/photo.cf?Width=" + LargeIconSize + "&Height=" + LargeIconSize + "&Ratio=" + devicePixelRatio + "&Checksum=" + icon);
 			}
 
 			if (bmp == null) {
