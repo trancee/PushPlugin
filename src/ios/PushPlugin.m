@@ -69,7 +69,7 @@
     {
         if ([soundArg isEqualToString:@"true"]) {
             notificationTypes |= UIRemoteNotificationTypeSound;
-        }
+    }
     }
     else if ([soundArg boolValue]) {
         notificationTypes |= UIRemoteNotificationTypeSound;
@@ -79,52 +79,57 @@
     {
         if ([alertArg isEqualToString:@"true"]) {
             notificationTypes |= UIRemoteNotificationTypeAlert;
-        }
+    }
     }
     else if ([alertArg boolValue]) {
         notificationTypes |= UIRemoteNotificationTypeAlert;
     }
 
-#if __IPHONE_OS_VERSION_MAX_ALLOWED >= 80000
-    UIUserNotificationType UserNotificationTypes = UIUserNotificationTypeNone;
-
-    if ([badgeArg isKindOfClass:[NSString class]])
+    if ([[[UIDevice currentDevice] systemVersion] floatValue] >= 8.0)
     {
-        if ([badgeArg isEqualToString:@"true"]) {
-            UserNotificationTypes |= UIUserNotificationTypeBadge;
-        }
-    }
-    else if ([badgeArg boolValue]) {
-        UserNotificationTypes |= UIUserNotificationTypeBadge;
-    }
 
-    if ([soundArg isKindOfClass:[NSString class]])
-    {
-        if ([soundArg isEqualToString:@"true"]) {
-            UserNotificationTypes |= UIUserNotificationTypeSound;
-        }
-    }
-    else if ([soundArg boolValue]) {
-        UserNotificationTypes |= UIUserNotificationTypeSound;
-    }
+      UIUserNotificationType UserNotificationTypes = UIUserNotificationTypeNone;
 
-    if ([alertArg isKindOfClass:[NSString class]])
-    {
-        if ([alertArg isEqualToString:@"true"]) {
-            UserNotificationTypes |= UIUserNotificationTypeAlert;
-        }
-    }
-    else if ([alertArg boolValue]) {
-        UserNotificationTypes |= UIUserNotificationTypeAlert;
-    }
+      if ([badgeArg isKindOfClass:[NSString class]])
+      {
+          if ([badgeArg isEqualToString:@"true"]) {
+              UserNotificationTypes |= UIUserNotificationTypeBadge;
+          }
+      }
+      else if ([badgeArg boolValue]) {
+          UserNotificationTypes |= UIUserNotificationTypeBadge;
+      }
 
-    notificationTypes |= UIRemoteNotificationTypeNewsstandContentAvailability;
-    UserNotificationTypes |= UIUserNotificationActivationModeBackground;
+      if ([soundArg isKindOfClass:[NSString class]])
+      {
+          if ([soundArg isEqualToString:@"true"]) {
+              UserNotificationTypes |= UIUserNotificationTypeSound;
+          }
+      }
+      else if ([soundArg boolValue]) {
+          UserNotificationTypes |= UIUserNotificationTypeSound;
+      }
 
-    UIUserNotificationSettings *settings = [UIUserNotificationSettings settingsForTypes:UserNotificationTypes categories:nil];
-    [[UIApplication sharedApplication] registerUserNotificationSettings:settings];
-    [[UIApplication sharedApplication] registerForRemoteNotifications];
-#endif
+      if ([alertArg isKindOfClass:[NSString class]])
+      {
+          if ([alertArg isEqualToString:@"true"]) {
+              UserNotificationTypes |= UIUserNotificationTypeAlert;
+          }
+      }
+      else if ([alertArg boolValue]) {
+          UserNotificationTypes |= UIUserNotificationTypeAlert;
+      }
+
+      notificationTypes |= UIRemoteNotificationTypeNewsstandContentAvailability;
+      UserNotificationTypes |= UIUserNotificationActivationModeBackground;
+
+      UIUserNotificationSettings *settings = [UIUserNotificationSettings settingsForTypes:UserNotificationTypes categories:nil];
+      [[UIApplication sharedApplication] registerUserNotificationSettings:settings];
+      [[UIApplication sharedApplication] registerForRemoteNotifications];
+    } else {
+      [[UIApplication sharedApplication] registerForRemoteNotificationTypes:
+               (UIUserNotificationTypeBadge | UIUserNotificationTypeSound | UIUserNotificationTypeAlert)];
+    }
 
     self.callback = [options objectForKey:@"ecb"];
 
