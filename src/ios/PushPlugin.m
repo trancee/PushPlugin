@@ -49,6 +49,9 @@
 
     NSMutableDictionary* options = [command.arguments objectAtIndex:0];
 
+#if __IPHONE_OS_VERSION_MAX_ALLOWED >= 80000
+		UIUserNotificationType UserNotificationTypes = UIUserNotificationTypeNone;
+#endif
     UIRemoteNotificationType notificationTypes = UIRemoteNotificationTypeNone;
 
     id badgeArg = [options objectForKey:@"badge"];
@@ -59,77 +62,54 @@
     {
         if ([badgeArg isEqualToString:@"true"]) {
             notificationTypes |= UIRemoteNotificationTypeBadge;
+#if __IPHONE_OS_VERSION_MAX_ALLOWED >= 80000
+            UserNotificationTypes |= UIUserNotificationTypeBadge;
+#endif
         }
     }
     else if ([badgeArg boolValue]) {
         notificationTypes |= UIRemoteNotificationTypeBadge;
+#if __IPHONE_OS_VERSION_MAX_ALLOWED >= 80000
+        UserNotificationTypes |= UIUserNotificationTypeBadge;
+#endif
     }
 
     if ([soundArg isKindOfClass:[NSString class]])
     {
         if ([soundArg isEqualToString:@"true"]) {
             notificationTypes |= UIRemoteNotificationTypeSound;
+#if __IPHONE_OS_VERSION_MAX_ALLOWED >= 80000
+            UserNotificationTypes |= UIUserNotificationTypeSound;
+#endif
     }
     }
     else if ([soundArg boolValue]) {
         notificationTypes |= UIRemoteNotificationTypeSound;
+#if __IPHONE_OS_VERSION_MAX_ALLOWED >= 80000
+        UserNotificationTypes |= UIUserNotificationTypeSound;
+#endif
     }
 
     if ([alertArg isKindOfClass:[NSString class]])
     {
         if ([alertArg isEqualToString:@"true"]) {
             notificationTypes |= UIRemoteNotificationTypeAlert;
+#if __IPHONE_OS_VERSION_MAX_ALLOWED >= 80000
+            UserNotificationTypes |= UIUserNotificationTypeAlert;
+#endif
     }
     }
     else if ([alertArg boolValue]) {
         notificationTypes |= UIRemoteNotificationTypeAlert;
+#if __IPHONE_OS_VERSION_MAX_ALLOWED >= 80000
+        UserNotificationTypes |= UIUserNotificationTypeAlert;
+#endif
     }
 
-    if ([[[UIDevice currentDevice] systemVersion] floatValue] >= 8.0)
-    {
-
-      UIUserNotificationType UserNotificationTypes = UIUserNotificationTypeNone;
-
-      if ([badgeArg isKindOfClass:[NSString class]])
-      {
-          if ([badgeArg isEqualToString:@"true"]) {
-              UserNotificationTypes |= UIUserNotificationTypeBadge;
-          }
-      }
-      else if ([badgeArg boolValue]) {
-          UserNotificationTypes |= UIUserNotificationTypeBadge;
-      }
-
-      if ([soundArg isKindOfClass:[NSString class]])
-      {
-          if ([soundArg isEqualToString:@"true"]) {
-              UserNotificationTypes |= UIUserNotificationTypeSound;
-          }
-      }
-      else if ([soundArg boolValue]) {
-          UserNotificationTypes |= UIUserNotificationTypeSound;
-      }
-
-      if ([alertArg isKindOfClass:[NSString class]])
-      {
-          if ([alertArg isEqualToString:@"true"]) {
-              UserNotificationTypes |= UIUserNotificationTypeAlert;
-          }
-      }
-      else if ([alertArg boolValue]) {
-          UserNotificationTypes |= UIUserNotificationTypeAlert;
-      }
-
-      notificationTypes |= UIRemoteNotificationTypeNewsstandContentAvailability;
-      UserNotificationTypes |= UIUserNotificationActivationModeBackground;
-
-      UIUserNotificationSettings *settings = [UIUserNotificationSettings settingsForTypes:UserNotificationTypes categories:nil];
-      [[UIApplication sharedApplication] registerUserNotificationSettings:settings];
-      [[UIApplication sharedApplication] registerForRemoteNotifications];
-    } else {
-      [[UIApplication sharedApplication] registerForRemoteNotificationTypes:
-               (UIUserNotificationTypeBadge | UIUserNotificationTypeSound | UIUserNotificationTypeAlert)];
-    }
+    notificationTypes |= UIRemoteNotificationTypeNewsstandContentAvailability;
+#if __IPHONE_OS_VERSION_MAX_ALLOWED >= 80000
+    UserNotificationTypes |= UIUserNotificationActivationModeBackground;
+#endif
 
     self.callback = [options objectForKey:@"ecb"];
 
@@ -137,6 +117,18 @@
         NSLog(@"PushPlugin.register: Push notification type is set to none");
 
     isInline = NO;
+
+#if __IPHONE_OS_VERSION_MAX_ALLOWED >= 80000
+    if ([[UIApplication sharedApplication]respondsToSelector:@selector(registerUserNotificationSettings:)]) {
+        UIUserNotificationSettings *settings = [UIUserNotificationSettings settingsForTypes:UserNotificationTypes categories:nil];
+        [[UIApplication sharedApplication] registerUserNotificationSettings:settings];
+        [[UIApplication sharedApplication] registerForRemoteNotifications];
+    } else {
+    		[[UIApplication sharedApplication] registerForRemoteNotificationTypes:notificationTypes];
+    }
+#else
+		[[UIApplication sharedApplication] registerForRemoteNotificationTypes:notificationTypes];
+#endif
 
 	if (notificationMessage)			// if there is a pending startup notification
 		[self notificationReceived];	// go ahead and process it
@@ -216,20 +208,42 @@
         if (isInline) {
             isInline = NO;
         }
-        NSLog(@"PushPlugin::notificationReceived::notificationMessage [%@]",dict);
-        NSString * jsCallBack = [NSString stringWithFormat:@"%@(%@);", self.callback, [PushPlugin JSONRepresentation:dict]];
+		else
+            [jsonStr appendFormat:@"foreground:\"%d\"", 0];
+
+        [jsonStr appendString:@"}"];
+
+        NSLog(@"Msg: %@", jsonStr);
+
+        NSString * jsCallBack = [NSString stringWithFormat:@"%@(%@);", self.callback, jsonStr];
         [self.webView stringByEvaluatingJavaScriptFromString:jsCallBack];
 
         self.notificationMessage = nil;
     }
 }
 
-+ (NSString*)JSONRepresentation:(id)obj {
-    NSString *result = nil;
+// reentrant method to drill down and surface all sub-dictionaries' key/value pairs into the top level json
+-(void)parseDictionary:(NSDictionary *)inDictionary intoJSON:(NSMutableString *)jsonString
+{
+    NSArray         *keys = [inDictionary allKeys];
+    NSString        *key;
 
-    NSData *jsonData = [self JSONDataRepresentation:obj];
-    if (nil != jsonData) {
-        result = [[NSString alloc] initWithData:jsonData encoding:NSUTF8StringEncoding];
+    for (key in keys)
+    {
+        id thisObject = [inDictionary objectForKey:key];
+
+        if ([thisObject isKindOfClass:[NSDictionary class]])
+            [self parseDictionary:thisObject intoJSON:jsonString];
+        else if ([thisObject isKindOfClass:[NSString class]])
+             [jsonString appendFormat:@"\"%@\":\"%@\",",
+              key,
+              [[[[inDictionary objectForKey:key]
+                stringByReplacingOccurrencesOfString:@"\\" withString:@"\\\\"]
+                 stringByReplacingOccurrencesOfString:@"\"" withString:@"\\\""]
+                 stringByReplacingOccurrencesOfString:@"\n" withString:@"\\n"]];
+        else {
+            [jsonString appendFormat:@"\"%@\":\"%@\",", key, [inDictionary objectForKey:key]];
+        }
     }
 
     return result;
