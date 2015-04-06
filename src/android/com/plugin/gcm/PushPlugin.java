@@ -30,7 +30,7 @@ public class PushPlugin extends CordovaPlugin {
 	private static String gECB;
 	private static String gSenderID;
 	private static Bundle gCachedExtras = null;
-    private static boolean gForeground = false;
+	private static boolean gForeground = false;
 
 	/**
 	 * Gets the application context from cordova's main activity.
@@ -121,39 +121,39 @@ public class PushPlugin extends CordovaPlugin {
 		}
 	}
 
-    @Override
-    public void initialize(CordovaInterface cordova, CordovaWebView webView) {
-        super.initialize(cordova, webView);
-        gForeground = true;
-    }
+	@Override
+	public void initialize(CordovaInterface cordova, CordovaWebView webView) {
+		super.initialize(cordova, webView);
+		gForeground = true;
+	}
 
 	@Override
-    public void onPause(boolean multitasking) {
-        super.onPause(multitasking);
-        gForeground = false;
-        final NotificationManager notificationManager = (NotificationManager) cordova.getActivity().getSystemService(Context.NOTIFICATION_SERVICE);
-        notificationManager.cancelAll();
-    }
+	public void onPause(boolean multitasking) {
+		super.onPause(multitasking);
+		gForeground = false;
+		final NotificationManager notificationManager = (NotificationManager) cordova.getActivity().getSystemService(Context.NOTIFICATION_SERVICE);
+		notificationManager.cancelAll();
+	}
 
-    @Override
-    public void onResume(boolean multitasking) {
-        super.onResume(multitasking);
-        gForeground = true;
-    }
+	@Override
+	public void onResume(boolean multitasking) {
+		super.onResume(multitasking);
+		gForeground = true;
+	}
 
-    @Override
-    public void onDestroy() {
-        super.onDestroy();
-        gForeground = false;
+	@Override
+	public void onDestroy() {
+		super.onDestroy();
+		gForeground = false;
 		gECB = null;
 		gWebView = null;
-    }
+	}
 
-    /*
-     * serializes a bundle to JSON.
-     */
-    private static JSONObject convertBundleToJson(Bundle extras)
-    {
+	/*
+	 * serializes a bundle to JSON.
+	 */
+	private static JSONObject convertBundleToJson(Bundle extras)
+	{
 		try
 		{
 			JSONObject json;
@@ -231,15 +231,15 @@ public class PushPlugin extends CordovaPlugin {
 			Log.e(TAG, "extrasToJSON: JSON exception");
 		}
 		return null;
-    }
+	}
 
-    public static boolean isInForeground()
-    {
-      return gForeground;
-    }
+	public static boolean isInForeground()
+	{
+		return gForeground;
+	}
 
-    public static boolean isActive()
-    {
-    	return gWebView != null;
-    }
+	public static boolean isActive()
+	{
+		return gWebView != null;
+	}
 }

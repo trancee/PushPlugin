@@ -88,19 +88,19 @@ public class GCMIntentService extends GCMBaseIntentService {
 		if (extras != null)
 		{
 			// if we are in the foreground, just surface the payload, else post it to the statusbar
-            if (PushPlugin.isInForeground()) {
+			if (PushPlugin.isInForeground()) {
 				extras.putBoolean("foreground", true);
-                PushPlugin.sendExtras(extras);
+				PushPlugin.sendExtras(extras);
 			}
 			else {
 				extras.putBoolean("foreground", false);
 
-                // Send a notification if there is a message
-                if (extras.getString("message") != null && extras.getString("message").length() != 0) {
-                    createNotification(context, extras);
-                }
-            }
-        }
+				// Send a notification if there is a message
+				if (extras.getString("message") != null && extras.getString("message").length() != 0) {
+					createNotification(context, extras);
+				}
+			}
+		}
 	}
 
 	public void createNotification(Context context, Bundle extras)
@@ -114,6 +114,9 @@ public class GCMIntentService extends GCMBaseIntentService {
 		Log.d(TAG, "devicePixelRatio: "+ devicePixelRatio);
 
 		String appName = getAppName(this);
+
+		// which version of the push notifications are we dealing with? (for backwards compatibility)
+		int v = Integer.parseInt(extras.getString("v", "1"));
 
 		Intent notificationIntent = new Intent(this, PushHandlerActivity.class);
 		notificationIntent.addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP | Intent.FLAG_ACTIVITY_CLEAR_TOP);
@@ -132,17 +135,34 @@ public class GCMIntentService extends GCMBaseIntentService {
 				// Set the first line of text in the platform notification template.
 				.setContentTitle(extras.getString("title"))
 				// Set the second line of text in the platform notification template.
-				.setContentText(extras.getString("message"))
+				.setContentText(
+					(v >= 2) ?
+							extras.getString("summary")
+						:
+							extras.getString("message")
+				)
 				// Set the third line of text in the platform notification template.
-				.setSubText(extras.getString("summary"))
+				.setSubText(
+					(v >= 2) ?
+						null
+					:
+						extras.getString("summary")
+				)
 				// Supply a PendingIntent to be sent when the notification is clicked.
 				.setContentIntent(contentIntent)
 				// Set the large number at the right-hand side of the notification.
-				.setNumber(extras.getInt("badge", extras.getInt("msgcnt", 0)))
+				.setNumber(Integer.parseInt(extras.getString("badge", extras.getString("msgcnt", "0"))))
 				// A variant of setSmallIcon(int) that takes an additional level parameter for when the icon is a LevelListDrawable.
 				.setSmallIcon(getSmallIcon(extras.getString("smallIcon"), context.getApplicationInfo().icon))
 				// Add a large icon to the notification (and the ticker on some devices).
-				.setLargeIcon(getLargeIcon(this, extras.getString("icon")))
+				.setLargeIcon(
+					getLargeIcon(this, 
+						(v >= 2) ? 
+							extras.getString("avatar", "https://img.andygreen.com/image.cf?Width=" + LargeIconSize + "&Path=avatar.png")
+						:
+							extras.getString("icon")
+					)
+				)
 				// Set the desired color for the indicator LED on the device, as well as the blink duty cycle (specified in milliseconds).
 				.setLights(getColor(extras.getString("led", "000000")), 500, 500)
 				// Make this notification automatically dismissed when the user touches it.
@@ -157,8 +177,8 @@ public class GCMIntentService extends GCMBaseIntentService {
 		}
 
 		if (Build.VERSION.SDK_INT >= 16) {
-			String message = extras.getString("message");
-			String pictureUrl = extras.getString("picture");
+			String message = (v >= 2) ? extras.getString("summary") : extras.getString("message");
+			String pictureUrl = (v >= 2) ? null : extras.getString("picture");
 			if (pictureUrl != null && pictureUrl.length() > 0) {
 				// Add a rich notification style to be applied at build time.
 				notification.setStyle(
@@ -184,17 +204,22 @@ public class GCMIntentService extends GCMBaseIntentService {
 						// Provide the longer text to be displayed in the big form of the template in place of the content text.
 						.bigText(message)
 						// Set the first line of text after the detail section in the big form of the template.
-						.setSummaryText(extras.getString("summary"))
+						.setSummaryText(
+							(v >= 2) ? 
+								null
+							:
+								extras.getString("summary")
+						)
 					);
 			}
 		}
 
-		((NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE)).notify((String) appName, extras.getInt("notificationId", 0), notification.build());
+		((NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE)).notify((String) appName, Integer.parseInt(extras.getString("notificationId", "0")), notification.build());
 	}
 
-    /**
-     * Returns the path of the notification's sound file
-     */
+	/**
+	 * Returns the path of the notification's sound file
+	 */
 	private static Uri getSound(String sound) {
 		if (sound != null) {
 			try {
@@ -208,9 +233,9 @@ public class GCMIntentService extends GCMBaseIntentService {
 
 		return null;
 	}
-    /**
-     * Returns the small icon's ID
-     */
+	/**
+	 * Returns the small icon's ID
+	 */
 	private static int getSmallIcon(String iconName, int iconId)
 	{
 		int resId = 0;
@@ -231,9 +256,9 @@ public class GCMIntentService extends GCMBaseIntentService {
 
 		return resId;
 	}
-    /**
-     * Returns the icon's ID
-     */
+	/**
+	 * Returns the icon's ID
+	 */
 	private static Bitmap getLargeIcon(Context context, String icon)
 	{
 		Bitmap bmp = null;
@@ -256,9 +281,9 @@ public class GCMIntentService extends GCMBaseIntentService {
 
 		return bmp;
 	}
-    /**
-     * Returns the bitmap
-     */
+	/**
+	 * Returns the bitmap
+	 */
 	private static Bitmap getPicture(Context context, String pictureUrl)
 	{
 		Bitmap bmp = null;
@@ -279,10 +304,10 @@ public class GCMIntentService extends GCMBaseIntentService {
 
 		return bmp;
 	}
-    /**
-     * @return
-     *      The notification color for LED
-     */
+	/**
+	 * @return
+	 *	The notification color for LED
+	 */
 	private static int getColor(String hexColor)
 	{
 		int aRGB = Integer.parseInt(hexColor,16);
@@ -305,114 +330,113 @@ public class GCMIntentService extends GCMBaseIntentService {
 
 
 
-    /**
-     * Returns numerical icon Value
-     *
-     * @param {String} className
-     * @param {String} iconName
-     */
-    private static int getIconValue (String className, String iconName) {
-        int icon = 0;
+	/**
+	 * Returns numerical icon Value
+	 *
+	 * @param {String} className
+	 * @param {String} iconName
+	 */
+	private static int getIconValue (String className, String iconName) {
+		int icon = 0;
 
-        try {
-            Class<?> klass  = Class.forName(className + ".R$drawable");
+		try {
+			Class<?> klass = Class.forName(className + ".R$drawable");
 
-            icon = (Integer) klass.getDeclaredField(iconName).get(Integer.class);
-        } catch (Exception e) {}
+			icon = (Integer) klass.getDeclaredField(iconName).get(Integer.class);
+		} catch (Exception e) {}
 
-        return icon;
-    }
+		return icon;
+	}
 
-    /**
-     * Converts an resource to Bitmap.
-     *
-     * @param icon
-     *      The resource name
-     * @return
-     *      The corresponding bitmap
-     */
-    private static Bitmap getIconFromRes (Context context, String icon) {
-        Resources res = context.getResources();
-        int iconId = 0;
+	/**
+	 * Converts an resource to Bitmap.
+	 *
+	 * @param icon
+	 *	The resource name
+	 * @return
+	 *	The corresponding bitmap
+	 */
+	private static Bitmap getIconFromRes (Context context, String icon) {
+		Resources res = context.getResources();
+		int iconId = 0;
 
-        iconId = getIconValue(packageName, icon);
+		iconId = getIconValue(packageName, icon);
 
-        if (iconId == 0) {
-            iconId = getIconValue("android", icon);
-        }
+		if (iconId == 0) {
+			iconId = getIconValue("android", icon);
+		}
 
-        if (iconId == 0) {
-            iconId = android.R.drawable.ic_menu_info_details;
-        }
+		if (iconId == 0) {
+			iconId = android.R.drawable.ic_menu_info_details;
+		}
 
-        Bitmap bmp = BitmapFactory.decodeResource(res, iconId);
+		Bitmap bmp = BitmapFactory.decodeResource(res, iconId);
 
-        return bmp;
-    }
+		return bmp;
+	}
 
-    /**
-     * Converts an Image URL to Bitmap.
-     *
-     * @param src
-     *      The external image URL
-     * @return
-     *      The corresponding bitmap
-     */
-    private static Bitmap getIconFromURL (String src) {
-        Bitmap bmp = null;
-        ThreadPolicy origMode = StrictMode.getThreadPolicy();
+	/**
+	 * Converts an Image URL to Bitmap.
+	 *
+	 * @param src
+	 *	The external image URL
+	 * @return
+	 *	The corresponding bitmap
+	 */
+	private static Bitmap getIconFromURL (String src) {
+		Bitmap bmp = null;
+		ThreadPolicy origMode = StrictMode.getThreadPolicy();
 
-        try {
-            URL url = new URL(src);
-            HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+		try {
+			URL url = new URL(src);
+			HttpURLConnection connection = (HttpURLConnection) url.openConnection();
 
-            StrictMode.ThreadPolicy policy =
-                    new StrictMode.ThreadPolicy.Builder().permitAll().build();
+			StrictMode.ThreadPolicy policy =
+					new StrictMode.ThreadPolicy.Builder().permitAll().build();
 
-            StrictMode.setThreadPolicy(policy);
+			StrictMode.setThreadPolicy(policy);
 
-            connection.setDoInput(true);
-            connection.connect();
+			connection.setDoInput(true);
+			connection.connect();
 
-            InputStream input = connection.getInputStream();
+			InputStream input = connection.getInputStream();
 
-            bmp = BitmapFactory.decodeStream(input);
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+			bmp = BitmapFactory.decodeStream(input);
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
 
-        StrictMode.setThreadPolicy(origMode);
+		StrictMode.setThreadPolicy(origMode);
 
-        return bmp;
-    }
+		return bmp;
+	}
 
-    /**
-     * Converts an Image URI to Bitmap.
-     *
-     * @param src
-     *      The internal image URI
-     * @return
-     *      The corresponding bitmap
-     */
-    private static Bitmap getIconFromURI (Context context, String src) {
-        AssetManager assets = context.getAssets();
-        Bitmap bmp = null;
+	/**
+	 * Converts an Image URI to Bitmap.
+	 *
+	 * @param src
+	 *	The internal image URI
+	 * @return
+	 *	The corresponding bitmap
+	 */
+	private static Bitmap getIconFromURI (Context context, String src) {
+		AssetManager assets = context.getAssets();
+		Bitmap bmp = null;
 
-        try {
-            String path = src.replace("file:/", "www");
-            InputStream input = assets.open(path);
+		try {
+			String path = src.replace("file:/", "www");
+			InputStream input = assets.open(path);
 
-            bmp = BitmapFactory.decodeStream(input);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+			bmp = BitmapFactory.decodeStream(input);
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
 
-        return bmp;
-    }
+		return bmp;
+	}
 
 	@Override
 	public void onError(Context context, String errorId) {
 		Log.e(TAG, "onError - errorId: " + errorId);
 	}
-
 }
