@@ -197,15 +197,17 @@
 }
 
 - (void)notificationReceived {
-    NSLog(@"PushPlugin::notificationReceived");
+    NSLog(@"Notification received");
 
-    if (self.notificationMessage && self.callback)
+    if (notificationMessage && self.callback)
     {
-        NSMutableDictionary *dict = [[NSMutableDictionary alloc] init];
-        dict[@"event"] = @"message";
-        dict[@"payload"] = self.notificationMessage;
-        dict[@"foreground"] = [NSNumber numberWithBool:isInline];
-        if (isInline) {
+        NSMutableString *jsonStr = [NSMutableString stringWithString:@"{"];
+
+        [self parseDictionary:notificationMessage intoJSON:jsonStr];
+
+        if (isInline)
+        {
+            [jsonStr appendFormat:@"foreground:\"%d\"", 1];
             isInline = NO;
         }
 		else
@@ -245,24 +247,6 @@
             [jsonString appendFormat:@"\"%@\":\"%@\",", key, [inDictionary objectForKey:key]];
         }
     }
-
-    return result;
-}
-
-+(NSData*)JSONDataRepresentation:(id)obj {
-    NSError *err = nil;
-    NSData *jsonData = nil;
-
-    if (nil != obj) {
-        NSJSONWritingOptions options = 0;
-        jsonData = [NSJSONSerialization dataWithJSONObject:obj
-                                                   options:options
-                                                     error:&err
-                    ];
-
-
-    }
-    return  jsonData;
 }
 
 - (void)setApplicationIconBadgeNumber:(CDVInvokedUrlCommand *)command {
