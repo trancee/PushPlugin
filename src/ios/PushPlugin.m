@@ -207,16 +207,19 @@
 
         NSMutableString *jsonStr = [NSMutableString stringWithString:@"{"];
 
-        [jsonStr appendFormat:@"payload:\"%@\"", payloadStr];
+        [jsonStr appendFormat:@"\"payload\":%@", payloadStr];
+        [jsonStr appendString:@","];
+
+        [jsonStr appendFormat:@"\"event\":\"%@\"", @"message"];
         [jsonStr appendString:@","];
 
         if (isInline)
         {
-            [jsonStr appendFormat:@"foreground:\"%d\"", 1];
+            [jsonStr appendFormat:@"\"foreground\":%@", true];
             isInline = NO;
         }
 		else
-            [jsonStr appendFormat:@"foreground:\"%d\"", 0];
+            [jsonStr appendFormat:@"\"foreground\":%@", false];
 
         [jsonStr appendString:@"}"];
 
