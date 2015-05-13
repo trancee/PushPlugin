@@ -215,11 +215,11 @@
 
         if (isInline)
         {
-            [jsonStr appendFormat:@"\"foreground\":%@", true];
+            [jsonStr appendFormat:@"\"foreground\":%@", @"true"];
             isInline = NO;
         }
 		else
-            [jsonStr appendFormat:@"\"foreground\":%@", false];
+            [jsonStr appendFormat:@"\"foreground\":%@", @"false"];
 
         [jsonStr appendString:@"}"];
 
