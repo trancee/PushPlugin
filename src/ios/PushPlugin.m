@@ -201,9 +201,14 @@
 
     if (notificationMessage && self.callback)
     {
+        NSMutableString *payloadStr = [NSMutableString stringWithString:@"{"];
+            [self parseDictionary:notificationMessage intoJSON:payloadStr];
+        [payloadStr appendString:@"}"];
+
         NSMutableString *jsonStr = [NSMutableString stringWithString:@"{"];
 
-        [self parseDictionary:notificationMessage intoJSON:jsonStr];
+        [jsonStr appendFormat:@"payload:\"%@\"", payloadStr];
+        [jsonStr appendString:@","];
 
         if (isInline)
         {
