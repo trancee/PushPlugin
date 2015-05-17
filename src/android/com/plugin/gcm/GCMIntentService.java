@@ -29,6 +29,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.util.Random;
 
 import com.google.android.gcm.GCMBaseIntentService;
 
@@ -118,11 +119,24 @@ public class GCMIntentService extends GCMBaseIntentService {
 		// which version of the push notifications are we dealing with? (for backwards compatibility)
 		int v = Integer.parseInt(extras.getString("v", "1"));
 
+		int notificationId = 0;
+		
+		try {
+			Random rand = new Random();
+			notificationId = Integer.parseInt(extras.getString("notificationId", String.valueOf(rand.nextInt(1000))));
+		}
+		catch(NumberFormatException e) {
+			Log.e(TAG, "Number format exception - Error parsing Notification ID: " + e.getMessage());
+		}
+		catch(Exception e) {
+			Log.e(TAG, "Number format exception - Error parsing Notification ID" + e.getMessage());
+		}
+
 		Intent notificationIntent = new Intent(this, PushHandlerActivity.class);
 		notificationIntent.addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP | Intent.FLAG_ACTIVITY_CLEAR_TOP);
 		notificationIntent.putExtra("pushBundle", extras);
 
-		PendingIntent contentIntent = PendingIntent.getActivity(this, 0, notificationIntent, PendingIntent.FLAG_UPDATE_CURRENT);
+		PendingIntent contentIntent = PendingIntent.getActivity(this, notificationId, notificationIntent, PendingIntent.FLAG_UPDATE_CURRENT);
 
 		int defaults = extras.getInt("defaults", (Notification.DEFAULT_ALL));
 
@@ -214,7 +228,7 @@ public class GCMIntentService extends GCMBaseIntentService {
 			}
 		}
 
-		((NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE)).notify((String) appName, Integer.parseInt(extras.getString("notificationId", "0")), notification.build());
+		((NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE)).notify((String) appName, notificationId, notification.build());
 	}
 
 	/**
