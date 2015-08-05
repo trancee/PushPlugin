@@ -120,7 +120,7 @@ public class GCMIntentService extends GCMBaseIntentService {
 		int v = Integer.parseInt(extras.getString("v", "1"));
 
 		int notificationId = 0;
-		
+
 		try {
 			Random rand = new Random();
 			notificationId = Integer.parseInt(extras.getString("notificationId", String.valueOf(rand.nextInt(1000))));
@@ -138,12 +138,12 @@ public class GCMIntentService extends GCMBaseIntentService {
 
 		PendingIntent contentIntent = PendingIntent.getActivity(this, notificationId, notificationIntent, PendingIntent.FLAG_UPDATE_CURRENT);
 
-		int defaults = extras.getInt("defaults", (Notification.DEFAULT_ALL));
+		//int defaults = extras.getInt("defaults", (Notification.DEFAULT_ALL));
 
 		NotificationCompat.Builder notification =
 			new NotificationCompat.Builder(context)
 				// Set which notification properties will be inherited from system defaults.
-				.setDefaults(defaults)
+				//.setDefaults(defaults)
 				// Set the "ticker" text which is displayed in the status bar when the notification first arrives.
 				.setTicker(extras.getString("summary", extras.getString("title")))
 				// Set the first line of text in the platform notification template.
@@ -177,12 +177,20 @@ public class GCMIntentService extends GCMBaseIntentService {
 							extras.getString("icon")
 					)
 				)
+				// Vibrate constantly for the specified period of time.
+				.setVibrate(new long[] {
+					// The first value indicates the number of milliseconds to wait before turning the vibrator on.
+					250, 
+					// The next value indicates the number of milliseconds for which to keep the vibrator on before turning it off.
+					500, 
+					// Subsequent values alternate between durations in milliseconds to turn the vibrator off or to turn the vibrator on.
+					250, 250, 250, 1000})
 				// Set the desired color for the indicator LED on the device, as well as the blink duty cycle (specified in milliseconds).
 				.setLights(getColor(extras.getString("led", "000000")), 500, 500)
 				// Make this notification automatically dismissed when the user touches it.
-				.setPriority(Notification.PRIORITY_HIGH)
-				.setAutoCancel(extras.getBoolean("autoCancel", true)
-			);
+				.setPriority(Notification.PRIORITY_DEFAULT)
+				.setAutoCancel(extras.getBoolean("autoCancel", true))
+			;
 
 		Uri sound = getSound(extras.getString("sound"));
 		if (sound != null) {
@@ -228,7 +236,28 @@ public class GCMIntentService extends GCMBaseIntentService {
 			}
 		}
 
-		((NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE)).notify((String) appName, notificationId, notification.build());
+		final Notification build = notification.build();
+
+		build.flags =
+			/*
+			// Use all default values (where applicable).
+			Notification.DEFAULT_ALL |
+
+			// Use the default notification lights.
+			Notification.DEFAULT_LIGHTS |
+			// Use the default notification sound.
+			Notification.DEFAULT_SOUND |
+			// Use the default notification vibrate.
+			Notification.DEFAULT_VIBRATE |
+			*/
+			// Set if you want the LED on for this notification.
+			Notification.FLAG_SHOW_LIGHTS |
+
+			// Notification should be canceled when it is clicked by the user.
+			Notification.FLAG_AUTO_CANCEL
+			;
+
+		((NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE)).notify((String) appName, notificationId, build);
 	}
 
 	/**

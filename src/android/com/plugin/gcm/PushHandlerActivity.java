@@ -22,7 +22,7 @@ public class PushHandlerActivity extends Activity
 	public void onCreate(Bundle savedInstanceState)
 	{
 		super.onCreate(savedInstanceState);
-		Log.v(TAG, "onCreate");
+		// Log.v(TAG, "onCreate");
 
 		boolean isPushPluginActive = PushPlugin.isActive();
 		processPushBundle(isPushPluginActive);
@@ -65,7 +65,9 @@ public class PushHandlerActivity extends Activity
 	@Override
 	protected void onResume() {
 		super.onResume();
+/*
 		final NotificationManager notificationManager = (NotificationManager) this.getSystemService(Context.NOTIFICATION_SERVICE);
-		notificationManager.cancelAll();
-	}
+		// notificationManager.cancelAll();
+		notificationManager.cancel(getIntent().getExtras().getInt("notificationId"));
+*/	}
 }
