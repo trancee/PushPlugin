@@ -170,8 +170,8 @@ public class GCMIntentService extends GCMBaseIntentService {
 				.setSmallIcon(getSmallIcon(extras.getString("smallIcon"), context.getApplicationInfo().icon))
 				// Add a large icon to the notification (and the ticker on some devices).
 				.setLargeIcon(
-					getLargeIcon(this, 
-						(v >= 2) ? 
+					getLargeIcon(this,
+						(v >= 2) ?
 							extras.getString("avatar", "https://img.andygreen.com/image.cf?Width=" + LargeIconSize + "&Path=avatar.png")
 						:
 							extras.getString("icon")
@@ -180,11 +180,14 @@ public class GCMIntentService extends GCMBaseIntentService {
 				// Vibrate constantly for the specified period of time.
 				.setVibrate(new long[] {
 					// The first value indicates the number of milliseconds to wait before turning the vibrator on.
-					250, 
+					75,		// Off
 					// The next value indicates the number of milliseconds for which to keep the vibrator on before turning it off.
-					500, 
+					75,	// On
 					// Subsequent values alternate between durations in milliseconds to turn the vibrator off or to turn the vibrator on.
-					250, 250, 250, 1000})
+					100,	// Off
+					100,	// On
+					200		// Off
+				})
 				// Set the desired color for the indicator LED on the device, as well as the blink duty cycle (specified in milliseconds).
 				.setLights(getColor(extras.getString("led", "000000")), 500, 500)
 				// Make this notification automatically dismissed when the user touches it.
@@ -227,7 +230,7 @@ public class GCMIntentService extends GCMBaseIntentService {
 						.bigText(message)
 						// Set the first line of text after the detail section in the big form of the template.
 						.setSummaryText(
-							(v >= 2) ? 
+							(v >= 2) ?
 								null
 							:
 								extras.getString("summary")
@@ -356,17 +359,17 @@ public class GCMIntentService extends GCMBaseIntentService {
 		int aRGB = Integer.parseInt(hexColor,16);
 
 		aRGB += 0xFF000000;
-		
+
 		return aRGB;
 	}
 
 	private static String getAppName(Context context)
 	{
-		CharSequence appName = 
+		CharSequence appName =
 				context
 					.getPackageManager()
 					.getApplicationLabel(context.getApplicationInfo());
-		
+
 		return (String)appName;
 	}
 
