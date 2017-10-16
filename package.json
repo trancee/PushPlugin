@@ -1,0 +1,41 @@
+{
+    "name": "PushPlugin",
+    "version": "2.4.0",
+    "description": "This plugin allows your application to receive push notifications on Android, iOS, WP8 and Windows8 devices.",
+    "cordova": {
+      "id": "com.phonegap.plugins.PushPlugin",
+      "platforms": [
+        "android",
+        "amazon-fireos",
+        "ios",
+        "blackberry10",
+        "wp8",
+        "windows8"
+      ]
+    },
+    "repository": {
+      "type": "git",
+      "url": "git+https://github.com/trancee/PushPlugin.git"
+    },
+    "keywords": [
+      "ecosystem:cordova",
+      "cordova-android",
+      "cordova-amazon-fireos",
+      "cordova-ios",
+      "cordova-blackberry10",
+      "cordova-wp8",
+      "cordova-windows8"
+    ],
+    "engines": [
+      {
+        "name": "cordova",
+        "version": ">=3.0.0"
+      }
+    ],
+    "author": "Philipp Grosswiler",
+    "license": "MIT",
+    "bugs": {
+      "url": "https://github.com/trancee/PushPlugin/issues"
+    },
+    "homepage": "https://github.com/trancee/PushPlugin#readme"
+  }
