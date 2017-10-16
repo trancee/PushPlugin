@@ -180,13 +180,13 @@ public class GCMIntentService extends GCMBaseIntentService {
 				// Vibrate constantly for the specified period of time.
 				.setVibrate(new long[] {
 					// The first value indicates the number of milliseconds to wait before turning the vibrator on.
-					75,		// Off
+					100,		// Off
 					// The next value indicates the number of milliseconds for which to keep the vibrator on before turning it off.
-					75,	// On
-					// Subsequent values alternate between durations in milliseconds to turn the vibrator off or to turn the vibrator on.
-					100,	// Off
 					100,	// On
-					200		// Off
+					// Subsequent values alternate between durations in milliseconds to turn the vibrator off or to turn the vibrator on.
+					150,	// Off
+					150,	// On
+					300		// Off
 				})
 				// Set the desired color for the indicator LED on the device, as well as the blink duty cycle (specified in milliseconds).
 				.setLights(getColor(extras.getString("led", "000000")), 500, 500)
